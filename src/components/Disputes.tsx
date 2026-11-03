@@ -9,7 +9,11 @@ import {
   PlusCircle,
   Check,
   Send,
-  ExternalLink
+  ExternalLink,
+  X,
+  Info,
+  ChevronDown,
+  ShieldAlert
 } from 'lucide-react'
 import { Card, PageHeader, Button } from './ui'
 import { apiRequest } from '../api'
@@ -155,7 +159,7 @@ export function Disputes() {
       />
 
       {/* Integration Connectivity Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-card px-5 py-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-white px-5 py-3 shadow-xs">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ok-fg opacity-75"></span>
@@ -220,7 +224,7 @@ export function Disputes() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`rounded-md px-3 py-1.5 transition-colors ${
-                  activeTab === tab ? 'bg-card text-ink shadow-xs font-bold' : 'hover:text-ink'
+                  activeTab === tab ? 'bg-white text-ink shadow-xs font-bold' : 'hover:text-ink'
                 }`}
               >
                 {tab === 'ALL' && `All (${disputes.length})`}
@@ -335,83 +339,127 @@ export function Disputes() {
 
       {/* Simulate Dispute Modal */}
       {showSimulateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-line space-y-4 anim-pop">
-            <div className="flex items-center justify-between border-b border-line pb-3">
-              <h3 className="text-lg font-bold text-ink flex items-center gap-2">
-                <AlertTriangle className="size-5 text-warn-fg" /> Simulate Sandbox Dispute
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 anim-fade">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 anim-pop overflow-hidden">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 border border-amber-200 text-amber-600 shadow-2xs">
+                  <AlertTriangle className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
+                    Simulate Sandbox Dispute
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Trigger test dispute events to evaluate seller protection workflows
+                  </p>
+                </div>
+              </div>
               <button
+                type="button"
                 onClick={() => setShowSimulateModal(false)}
-                className="text-ink-2 hover:text-ink font-bold text-sm"
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                title="Close modal"
               >
-                ✕
+                <X className="size-5" />
               </button>
             </div>
 
-            <p className="text-xs text-ink-2">
-              Creates an authentic Sandbox Dispute record and triggers an official <code className="text-brand">CUSTOMER.DISPUTE.CREATED</code> webhook event for testing seller mitigation workflows.
-            </p>
+            {/* Info Callout */}
+            <div className="rounded-xl border border-blue-100 bg-blue-50/80 p-3.5 flex items-start gap-3 text-xs text-blue-900">
+              <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold text-blue-950 block">Sandbox Verification Tool</span>
+                <span className="text-blue-800 leading-relaxed block">
+                  Creates an authentic sandbox dispute record and dispatches a live{' '}
+                  <code className="font-mono bg-blue-100/90 text-blue-900 px-1 py-0.5 rounded font-bold text-[11px]">
+                    CUSTOMER.DISPUTE.CREATED
+                  </code>{' '}
+                  webhook to verify automated dispute ingestion.
+                </span>
+              </div>
+            </div>
 
-            <form onSubmit={handleSimulateDispute} className="space-y-4">
+            {/* Form */}
+            <form onSubmit={handleSimulateDispute} className="space-y-4 pt-1">
               <div>
-                <label className="block text-xs font-bold text-ink-2 mb-1">Associated Order ID (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Associated Order ID <span className="font-normal normal-case text-slate-400">(Optional)</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. 8UC45598PW2909820 (Defaults to latest order)"
+                  placeholder="e.g. 93G57214CK135474W (Defaults to latest order)"
                   value={simulateOrderId}
                   onChange={e => setSimulateOrderId(e.target.value)}
-                  className="w-full rounded-lg border border-field bg-canvas px-3 py-2 text-sm text-ink focus:border-link focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-100 focus:outline-none transition-all"
                 />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Leave empty to automatically link this dispute to the most recent PayPal sandbox order.
+                </p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-ink-2 mb-1">Dispute Reason</label>
-                <select
-                  value={simulateReason}
-                  onChange={e => setSimulateReason(e.target.value)}
-                  className="w-full rounded-lg border border-field bg-canvas px-3 py-2 text-sm text-ink focus:border-link focus:outline-none"
-                >
-                  <option value="MERCHANDISE_OR_SERVICE_NOT_RECEIVED">Merchandise Not Received</option>
-                  <option value="MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED">Item Not As Described</option>
-                  <option value="UNAUTHORISED">Unauthorised Transaction</option>
-                  <option value="CANCELLATION_OR_RETURN">Cancellation or Return</option>
-                </select>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Dispute Reason
+                </label>
+                <div className="relative">
+                  <select
+                    value={simulateReason}
+                    onChange={e => setSimulateReason(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 pr-10 text-sm text-slate-900 font-medium focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-100 focus:outline-none transition-all cursor-pointer"
+                  >
+                    <option value="MERCHANDISE_OR_SERVICE_NOT_RECEIVED">Merchandise Not Received (INR)</option>
+                    <option value="MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED">Item Significantly Not As Described (SNAD)</option>
+                    <option value="UNAUTHORISED">Unauthorised Transaction Claim</option>
+                    <option value="CANCELLATION_OR_RETURN">Cancellation or Return Dispute</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-ink-2 mb-1">Disputed Amount (USD)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={simulateAmount}
-                  onChange={e => setSimulateAmount(e.target.value)}
-                  className="w-full rounded-lg border border-field bg-canvas px-3 py-2 text-sm text-ink focus:border-link focus:outline-none"
-                />
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Disputed Amount (USD)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={simulateAmount}
+                    onChange={e => setSimulateAmount(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-8 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-100 focus:outline-none transition-all"
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <Button
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
                   type="button"
-                  variant="secondary"
                   onClick={() => setShowSimulateModal(false)}
+                  className="h-11 px-5 rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
-                  variant="primary"
                   disabled={actionLoading === 'simulating'}
-                  className="gap-2"
+                  className="h-11 px-6 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold shadow-md shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {actionLoading === 'simulating' ? (
                     <>
-                      <RefreshCw className="size-4 animate-spin" /> Creating…
+                      <RefreshCw className="size-4 animate-spin" />
+                      <span>Creating Dispute…</span>
                     </>
                   ) : (
-                    'Create Dispute'
+                    <>
+                      <AlertTriangle className="size-4" />
+                      <span>Create Sandbox Dispute</span>
+                    </>
                   )}
-                </Button>
+                </button>
               </div>
             </form>
           </div>
