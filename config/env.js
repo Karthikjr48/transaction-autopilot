@@ -42,6 +42,24 @@ function resolveMerchantCredentials() {
   };
 }
 
+// Secure resolution of Email provider with cloud firewall awareness
+function resolveEmailProvider() {
+  const envProvider = (process.env.EMAIL_PROVIDER || '').toLowerCase();
+  const isRender = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.RENDER_EXTERNAL_URL);
+
+  // On Render cloud hosting, outbound SMTP ports (25, 465, 587) are blocked by Render's firewall.
+  // Resend HTTPS API (port 443) is the supported and reliable provider for Render cloud deployments.
+  if (isRender && (envProvider === 'brevo' || envProvider === 'gmail' || envProvider === 'smtp' || !envProvider)) {
+    return 'resend';
+  }
+
+  if (envProvider) {
+    return envProvider;
+  }
+
+  return 'gmail';
+}
+
 export const config = {
   // Network Ports & URLs
   port: parseInt(process.env.PORT || '5000', 10),
@@ -80,7 +98,7 @@ export const config = {
 
   // Email & Invoice Delivery Provider Configuration
   email: {
-    provider: (process.env.EMAIL_PROVIDER || 'gmail').toLowerCase(), // 'gmail', 'resend', 'brevo', 'smtp', 'none'
+    provider: resolveEmailProvider(), // 'resend', 'brevo', 'gmail', 'smtp', 'none'
     resendApiKey: process.env.RESEND_API_KEY || '',
     smtpHost: process.env.SMTP_HOST || (process.env.EMAIL_PROVIDER === 'gmail' ? 'smtp.gmail.com' : process.env.EMAIL_PROVIDER === 'brevo' ? 'smtp-relay.brevo.com' : 'smtp.resend.com'),
     smtpPort: parseInt(process.env.SMTP_PORT || (process.env.EMAIL_PROVIDER === 'gmail' ? '465' : '465'), 10),

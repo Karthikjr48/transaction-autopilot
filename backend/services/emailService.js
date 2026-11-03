@@ -244,6 +244,105 @@ export async function verifySmtpConnection() {
  * Core transactional email sender
  * Strictly implements idempotency, delivery state transitions, and audit logging.
  */
+/**
+ * Helper to dispatch emails via Resend HTTPS REST API (Port 443)
+ * Guarantees outbound delivery even when cloud firewalls (e.g. Render Free Tier) block SMTP ports.
+ */
+async function dispatchViaResend(event, cleanEmail, subject, html, text, orderId) {
+  const fromAddr = config.email.fromAddress || 'onboarding@resend.dev';
+  const apiKey = config.email.resendApiKey || process.env.RESEND_API_KEY || '';
+
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+
+  const resendRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: fromAddr,
+      to: cleanEmail,
+      subject,
+      html,
+      text
+    })
+  });
+
+  const resendData = await resendRes.json().catch(() => ({}));
+  if (!resendRes.ok) {
+    const ownerEmail = config.email.testRecipient || 'loyolaignatiuskarthik@gmail.com';
+    if (resendRes.status === 403 && resendData.message && resendData.message.includes('own email address') && cleanEmail.toLowerCase() !== ownerEmail.toLowerCase()) {
+      console.warn(`[Resend Sandbox Policy] Recipient ${cleanEmail} is restricted by Resend sandbox. Re-routing delivery to verified account owner: ${ownerEmail}`);
+
+      const forwardNotice = `<div style="background:#f0f9ff;border:1px solid #bae6fd;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0369a1;font-size:13px;">
+        <strong>ℹ️ Resend Sandbox Delivery Notice:</strong><br/>
+        This email was generated for customer <strong>${cleanEmail}</strong>. Because the Resend sandbox environment (<code>onboarding@resend.dev</code>) restricts outbound delivery to the account owner, this message was safely delivered to your registered inbox: <strong>${ownerEmail}</strong>.
+      </div>`;
+
+      const forwardRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromAddr,
+          to: ownerEmail,
+          subject: `[Sandbox Delivery for ${cleanEmail}] ${subject}`,
+          html: `${forwardNotice}${html}`,
+          text: `[Sandbox Forward for ${cleanEmail}]\n\n${text}`
+        })
+      });
+
+      const forwardData = await forwardRes.json().catch(() => ({}));
+      if (forwardRes.ok) {
+        const providerMessageId = forwardData.id || `<${event.id}@resend.com>`;
+        updateEventStatus(event.id, {
+          status: 'ACCEPTED_BY_PROVIDER',
+          providerMessageId,
+          smtpResponse: `200 OK (Delivered to ${ownerEmail} via Resend Sandbox)`,
+          error: null
+        });
+
+        console.log(`[Resend Sandbox] Event ${event.eventType} safely delivered to owner inbox ${ownerEmail} (${providerMessageId})`);
+
+        return {
+          success: true,
+          status: 'ACCEPTED_BY_PROVIDER',
+          messageId: providerMessageId,
+          event,
+          forwardedTo: ownerEmail,
+          originalRecipient: cleanEmail,
+          resendSandboxRestriction: true
+        };
+      }
+    }
+
+    throw new Error(resendData.message || `Resend API returned HTTP ${resendRes.status}`);
+  }
+
+  const providerMessageId = resendData.id || `<${event.id}@resend.com>`;
+
+  updateEventStatus(event.id, {
+    status: 'ACCEPTED_BY_PROVIDER',
+    providerMessageId,
+    smtpResponse: '200 OK (Resend REST API)',
+    error: null
+  });
+
+  console.log(`[Resend API] Event ${event.eventType} for Order ${maskOrderRef(orderId)} accepted (${providerMessageId})`);
+
+  return {
+    success: true,
+    status: 'ACCEPTED_BY_PROVIDER',
+    messageId: providerMessageId,
+    event
+  };
+}
+
 export async function sendEmail({
   eventType,
   orderId,
@@ -289,93 +388,7 @@ export async function sendEmail({
   // 3A. Dispatch via Resend REST API if provider is Resend
   if (provider === 'resend') {
     try {
-      const fromAddr = config.email.fromAddress || 'onboarding@resend.dev';
-      const resendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${config.email.resendApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: fromAddr,
-          to: cleanEmail,
-          subject,
-          html,
-          text
-        })
-      });
-
-      const resendData = await resendRes.json().catch(() => ({}));
-      if (!resendRes.ok) {
-        // If Resend Sandbox restriction (403: can only send to owner email)
-        const ownerEmail = config.email.testRecipient || 'loyolaignatiuskarthik@gmail.com';
-        if (resendRes.status === 403 && resendData.message?.includes('own email address') && cleanEmail.toLowerCase() !== ownerEmail.toLowerCase()) {
-          console.warn(`[Resend Sandbox Policy] Recipient ${cleanEmail} is restricted by Resend sandbox. Re-routing delivery to verified account owner: ${ownerEmail}`);
-          
-          const forwardNotice = `<div style="background:#f0f9ff;border:1px solid #bae6fd;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0369a1;font-size:13px;">
-            <strong>ℹ️ Resend Sandbox Delivery Notice:</strong><br/>
-            This email was generated for customer <strong>${cleanEmail}</strong>. Because the Resend sandbox environment (<code>onboarding@resend.dev</code>) restricts outbound delivery to the account owner, this message was safely delivered to your registered inbox: <strong>${ownerEmail}</strong>.
-          </div>`;
-
-          const forwardRes = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${config.email.resendApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              from: fromAddr,
-              to: ownerEmail,
-              subject: `[Sandbox Delivery for ${cleanEmail}] ${subject}`,
-              html: `${forwardNotice}${html}`,
-              text: `[Sandbox Forward for ${cleanEmail}]\n\n${text}`
-            })
-          });
-
-          const forwardData = await forwardRes.json().catch(() => ({}));
-          if (forwardRes.ok) {
-            const providerMessageId = forwardData.id || `<${event.id}@resend.com>`;
-            updateEventStatus(event.id, {
-              status: 'ACCEPTED_BY_PROVIDER',
-              providerMessageId,
-              smtpResponse: `200 OK (Delivered to ${ownerEmail} via Resend Sandbox)`,
-              error: null
-            });
-
-            console.log(`[Resend Sandbox] Event ${event.eventType} safely delivered to owner inbox ${ownerEmail} (${providerMessageId})`);
-
-            return {
-              success: true,
-              status: 'ACCEPTED_BY_PROVIDER',
-              messageId: providerMessageId,
-              event,
-              forwardedTo: ownerEmail,
-              originalRecipient: cleanEmail,
-              resendSandboxRestriction: true
-            };
-          }
-        }
-
-        throw new Error(resendData.message || `Resend API returned HTTP ${resendRes.status}`);
-      }
-
-      const providerMessageId = resendData.id || `<${event.id}@resend.com>`;
-
-      updateEventStatus(event.id, {
-        status: 'ACCEPTED_BY_PROVIDER',
-        providerMessageId,
-        smtpResponse: '200 OK (Resend REST API)',
-        error: null
-      });
-
-      console.log(`[Resend API] Event ${event.eventType} for Order ${maskOrderRef(orderId)} accepted (${providerMessageId})`);
-
-      return {
-        success: true,
-        status: 'ACCEPTED_BY_PROVIDER',
-        messageId: providerMessageId,
-        event
-      };
+      return await dispatchViaResend(event, cleanEmail, subject, html, text, orderId);
     } catch (err) {
       const sanitizedError = err.message || 'Resend dispatch failure';
       updateEventStatus(event.id, {
@@ -456,6 +469,20 @@ export async function sendEmail({
     };
   } catch (err) {
     const sanitizedError = err.message || 'SMTP transmission failure';
+
+    // Automatic Resend HTTPS fallback if SMTP fails (e.g. Render cloud port blocking / connection timeout)
+    if (!mockTransportOverride && (config.email.resendApiKey || process.env.RESEND_API_KEY)) {
+      try {
+        console.warn(`[Email Service] SMTP delivery failed (${sanitizedError}). Attempting automatic Resend HTTPS fallback...`);
+        const fallbackResult = await dispatchViaResend(event, cleanEmail, subject, html, text, orderId);
+        if (fallbackResult && fallbackResult.success) {
+          console.log(`[Email Service] Resend HTTPS fallback delivered successfully (${fallbackResult.messageId})`);
+          return fallbackResult;
+        }
+      } catch (fallbackErr) {
+        console.error(`[Email Service] Resend fallback attempt failed:`, fallbackErr.message);
+      }
+    }
     const isPermanent = err.responseCode && err.responseCode >= 500 && err.responseCode < 600;
     const finalStatus = isPermanent ? 'BOUNCED' : 'FAILED';
 

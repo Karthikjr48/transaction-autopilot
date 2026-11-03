@@ -17,7 +17,9 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: EMAIL_PROVIDER
-        value: brevo
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
       - key: SMTP_HOST
         value: smtp-relay.brevo.com
       - key: SMTP_PORT
@@ -27,7 +29,7 @@ services:
       - key: SMTP_PASS
         sync: false
       - key: EMAIL_FROM
-        value: noreply@transaction-autopilot.com
+        value: onboarding@resend.dev
       - key: MERCHANT_EMAIL
         value: merchant@transaction-autopilot.com
       - key: MERCHANT_PASSWORD
