@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   LayoutGrid, ReceiptText, Link2, FileText, Bot, ShieldAlert,
   ClipboardList, Settings2, ChevronDown, CircleHelp, LogOut, LogIn,
-  Search, ShieldCheck, UserRound, ShoppingCart, Terminal,
+  Search, ShieldCheck, UserRound, ShoppingCart, Terminal, X,
 } from 'lucide-react'
 import paypalLogo from './assets/paypal-logo.png'
 import { Overview } from './components/Overview'
@@ -179,14 +179,25 @@ export default function App() {
     { key: 'system', label: 'System' },
   ]
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <>
       {/* Brand & Logo Header */}
       <div className="shrink-0 border-b border-white/10 p-3.5">
-        <div className="flex items-center justify-center rounded-xl bg-white py-2.5 shadow-sm">
-          <img src={paypalLogo} alt="PayPal" className="h-8 w-auto" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center rounded-xl bg-white py-2 px-3 shadow-sm">
+            <img src={paypalLogo} alt="PayPal" className="h-7 w-auto" />
+          </div>
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="flex size-9 items-center justify-center rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="size-5" />
+            </button>
+          )}
         </div>
-        <div className="mt-2 px-1 hidden lg:block">
+        <div className={`mt-2.5 px-1 ${isMobile ? 'block' : 'hidden lg:block'}`}>
           <div className="text-[13px] leading-tight font-extrabold tracking-wide text-white">PayPal Commerce</div>
           <div className="mt-0.5 text-[11px] font-semibold tracking-[.18em] text-white/60 uppercase">Merchant Portal</div>
         </div>
@@ -199,38 +210,67 @@ export default function App() {
           return (
             <div key={g.key}>
               {g.label && (
-                <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 hidden lg:block">
+                <div className={`mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 ${isMobile ? 'block' : 'hidden lg:block'}`}>
                   {g.label}
                 </div>
               )}
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {items.map(({ id, label, Icon }) => (
                   <button
                     key={id}
-                    onClick={() => go(id)}
+                    onClick={() => {
+                      go(id)
+                      if (isMobile) setSidebarOpen(false)
+                    }}
                     aria-current={page === id ? 'page' : undefined}
-                    className={`flex h-10 items-center justify-center gap-3 rounded-xl text-sm font-semibold lg:justify-start lg:px-3.5 transition-all ${
+                    className={`flex h-11 items-center gap-3.5 rounded-xl text-sm font-semibold transition-all ${
+                      isMobile
+                        ? 'justify-start px-3.5'
+                        : 'justify-center lg:justify-start lg:px-3.5'
+                    } ${
                       page === id
                         ? 'bg-white/15 text-white shadow-[inset_3px_0_0_#60a5fa]'
-                        : 'text-white/70 hover:bg-white/8 hover:text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <Icon className="size-[18px] shrink-0" aria-hidden />
-                    <span className="hidden lg:inline">{label}</span>
-                    <span className="sr-only lg:hidden">{label}</span>
+                    <Icon className="size-[19px] shrink-0" aria-hidden />
+                    <span className={isMobile ? 'inline text-sm font-medium' : 'hidden lg:inline'}>{label}</span>
+                    <span className={isMobile ? 'hidden' : 'sr-only lg:hidden'}>{label}</span>
                   </button>
                 ))}
               </div>
             </div>
           )
         })}
+
+        {/* Developer Console in Mobile Drawer */}
+        {isMobile && (
+          <div className="pt-2 border-t border-white/10">
+            <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40">
+              Operations
+            </div>
+            <button
+              onClick={() => {
+                setSidebarOpen(false)
+                navigate('/developer')
+              }}
+              className="flex h-11 w-full items-center gap-3.5 rounded-xl px-3.5 text-sm font-semibold text-emerald-300 hover:bg-white/10 transition-all"
+            >
+              <Terminal className="size-[19px] shrink-0 text-emerald-400" />
+              <span>Developer Console</span>
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Clean Merchant Footer (Pinned, never overlaps nav) */}
       <div className="shrink-0 border-t border-white/10 p-3 bg-navy-900 z-10">
         <button
-          onClick={() => setModal(true)}
-          className="hidden lg:flex h-9 w-full items-center gap-2 rounded-xl px-3.5 text-left text-[12px] font-semibold text-white/60 hover:bg-white/8 hover:text-white transition-colors"
+          onClick={() => {
+            if (isMobile) setSidebarOpen(false)
+            setModal(true)
+          }}
+          className={`${isMobile ? 'flex' : 'hidden lg:flex'} h-9 w-full items-center gap-2 rounded-xl px-3.5 text-left text-[12px] font-semibold text-white/60 hover:bg-white/8 hover:text-white transition-colors`}
         >
           <ShieldCheck className="size-4 shrink-0 text-emerald-400" /> Cookie Preferences
         </button>
@@ -245,15 +285,15 @@ export default function App() {
     <div className="min-h-screen md:pl-[72px] lg:pl-[240px] bg-canvas text-ink">
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-[72px] flex-col bg-navy-900 text-white md:flex lg:w-[240px] z-30 overflow-hidden">
-        <SidebarContent />
+        <SidebarContent isMobile={false} />
       </aside>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative flex h-full w-[240px] flex-col bg-navy-900 text-white overflow-hidden">
-            <SidebarContent />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative flex h-full w-[280px] max-w-[85vw] flex-col bg-navy-900 text-white shadow-2xl overflow-hidden anim-pop">
+            <SidebarContent isMobile={true} />
           </aside>
         </div>
       )}
