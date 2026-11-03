@@ -100,6 +100,26 @@ export function Login({ onSuccess, onNavigateHome }: LoginProps) {
             </div>
           )}
 
+          {/* Quick Demo Credentials for Hackathon Evaluators */}
+          <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 flex items-center justify-between text-xs">
+            <div>
+              <span className="font-bold text-blue-900 block mb-0.5">Sandbox Merchant Credentials</span>
+              <span className="font-mono text-blue-700">merchant@paypal-portal.local &bull; MerchantSecure2026!</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('merchant@paypal-portal.local')
+                setPassword('MerchantSecure2026!')
+                setError(null)
+                setFieldErrors({})
+              }}
+              className="px-3 py-1.5 font-bold bg-white text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white hover:border-transparent transition-all shadow-xs cursor-pointer"
+            >
+              Fill Demo
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Email Field */}
             <div>

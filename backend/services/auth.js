@@ -255,8 +255,14 @@ export function authenticateMerchant(email, password, req = null) {
     return { success: false, error: 'Merchant credentials are not configured on the server.' };
   }
 
-  // Check email
-  const emailMatches = cleanEmail === configuredEmail;
+  // Check email: accept configured email or recognized merchant demo domain aliases
+  const acceptedEmails = [
+    configuredEmail,
+    'merchant@paypal-portal.local',
+    'merchant@transaction-autopilot.com',
+    'merchant@transaction-autopilot.onrender.com'
+  ].filter(Boolean);
+  const emailMatches = acceptedEmails.includes(cleanEmail);
 
   // Constant-time password check
   let passMatches = false;
