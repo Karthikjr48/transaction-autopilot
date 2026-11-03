@@ -6,9 +6,18 @@
 
 import crypto from 'crypto';
 import { config } from '../../config/env.js';
+import { loadSessions, saveSessionToDisk, deleteSessionFromDisk } from './dataPersistence.js';
 
 // In-memory active session store: sessionId -> session object
 const activeSessions = new Map();
+
+// Hydrate persistent sessions on module load (zero session loss across restarts)
+try {
+  const persisted = loadSessions();
+  for (const [sid, sess] of Object.entries(persisted)) {
+    activeSessions.set(sid, sess);
+  }
+} catch (_) {}
 
 // Session lifetime configuration
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes idle timeout
@@ -72,9 +81,11 @@ export function createSession({ role = 'merchant', req = null, existingSessionId
   // Invalidate previous session if rotating
   if (existingSessionId && activeSessions.has(existingSessionId)) {
     activeSessions.delete(existingSessionId);
+    deleteSessionFromDisk(existingSessionId);
   }
 
   activeSessions.set(sessionId, session);
+  saveSessionToDisk(session);
   return session;
 }
 
@@ -91,16 +102,19 @@ export function getSession(sessionId) {
   // Check absolute expiration
   if (now > session.expiresAt) {
     activeSessions.delete(sessionId);
+    deleteSessionFromDisk(sessionId);
     return null;
   }
 
   // Check idle timeout
   if (now - session.lastActiveAt > IDLE_TIMEOUT_MS) {
     activeSessions.delete(sessionId);
+    deleteSessionFromDisk(sessionId);
     return null;
   }
 
   session.lastActiveAt = now;
+  saveSessionToDisk(session);
   return session;
 }
 
@@ -110,6 +124,7 @@ export function getSession(sessionId) {
 export function destroySession(sessionId) {
   if (sessionId && activeSessions.has(sessionId)) {
     activeSessions.delete(sessionId);
+    deleteSessionFromDisk(sessionId);
     return true;
   }
   return false;

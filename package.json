@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "node tests/test-security-remediation.js && node tests/test-paypal-oauth.js && node tests/test-merchant-separation.js && node tests/test-brevo-smtp-and-privacy.js",
     "start": "node server.js",
     "start:dual": "node start-all.js",
     "start:server": "node server.js",

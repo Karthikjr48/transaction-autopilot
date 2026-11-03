@@ -776,42 +776,6 @@ async function fetchPayPalOrderDetails(orderId) {
       orderData = await response.json();
 
       if (!response.ok) {
-        if (orderId === '8UC45598PW2909820') {
-          const fallbackOrder = getOrder('8UC45598PW2909820');
-          return {
-            id: '8UC45598PW2909820',
-            intent: 'CAPTURE',
-            status: fallbackOrder?.paypalStatus || 'CREATED',
-            referenceId: fallbackOrder?.paypalReference || 'ORD-637403',
-            amount: fallbackOrder?.amount || 31.00,
-            currency: fallbackOrder?.currency || 'USD',
-            createTime: fallbackOrder?.timestamp || '2026-10-18T05:33:57Z',
-            updateTime: fallbackOrder?.timestamp || '2026-10-18T05:33:57Z',
-            payeeEmail: null,
-            payerEmail: fallbackOrder?.payerEmail || null,
-            payerName: fallbackOrder?.payerName || null,
-            shippingAddress: null,
-            captureStatus: fallbackOrder?.captureStatus || 'UNCAPTURED',
-            capturedAmount: fallbackOrder?.capturedAmount || 0,
-            captureId: null,
-            hasTracking: Boolean(fallbackOrder?.trackingNumber),
-            trackingNumber: fallbackOrder?.trackingNumber || null,
-            carrier: fallbackOrder?.carrier || null,
-            links: [
-              {
-                href: `https://www.sandbox.paypal.com/checkoutnow?token=8UC45598PW2909820`,
-                rel: 'approve',
-                method: 'GET'
-              },
-              {
-                href: `https://api-m.sandbox.paypal.com/v2/checkout/orders/8UC45598PW2909820`,
-                rel: 'self',
-                method: 'GET'
-              }
-            ],
-            rawPayload: {}
-          };
-        }
         const errorDetail = orderData.message || orderData.details?.[0]?.issue || 'PayPal Order not found';
         const err = new Error(`PayPal Orders API Error (${response.status}): ${errorDetail}`);
         err.status = response.status;
@@ -961,7 +925,20 @@ app.get('/api/paypal/order/:orderId', async (req, res) => {
  */
 export async function executeCreateSandboxOrder({ amount, currency = 'USD', recipientEmail = null, description = 'Sandbox Commerce Item (Autopilot Test)' }) {
   const token = await getValidAccessToken();
-  const validAmount = amount ? parseFloat(amount).toFixed(2) : (Math.floor(Math.random() * 200) + 25).toFixed(2);
+
+  // Strict financial validation: amounts must be deterministic, positive numeric values (never random)
+  if (amount !== undefined && amount !== null && amount !== '') {
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0) {
+      const err = new Error('Explicit positive transaction amount is required.');
+      err.status = 400;
+      throw err;
+    }
+  }
+
+  const validAmount = (amount !== undefined && amount !== null && amount !== '' && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0)
+    ? parseFloat(amount).toFixed(2)
+    : '35.00';
   const validCurrency = currency || 'USD';
   const orderRef = `ORD-${Date.now().toString().slice(-6)}`;
 
@@ -1068,8 +1045,30 @@ export async function executeCreateSandboxOrder({ amount, currency = 'USD', reci
  */
 async function handleCreateSandboxOrder(req, res) {
   try {
+    const isStandardOrder = req.path === '/api/paypal/orders';
+    const amountVal = req.body?.amount;
+
+    // Standard checkout orders strictly require an explicit positive amount
+    if (isStandardOrder) {
+      if (amountVal === undefined || amountVal === null || amountVal === '' || isNaN(parseFloat(amountVal)) || parseFloat(amountVal) <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Transaction amount is required and must be a positive numeric value.'
+        });
+      }
+    } else {
+      if (amountVal !== undefined && amountVal !== null && amountVal !== '') {
+        if (isNaN(parseFloat(amountVal)) || parseFloat(amountVal) <= 0) {
+          return res.status(400).json({
+            success: false,
+            error: 'When specified, transaction amount must be a positive numeric value.'
+          });
+        }
+      }
+    }
+
     const result = await executeCreateSandboxOrder({
-      amount: req.body?.amount,
+      amount: amountVal,
       currency: req.body?.currency,
       recipientEmail: req.body?.recipientEmail ? String(req.body.recipientEmail).trim() : null,
       description: req.body?.description
@@ -1084,14 +1083,20 @@ async function handleCreateSandboxOrder(req, res) {
       emailDispatched: result.emailDispatched
     });
   } catch (err) {
-    res.status(500).json({
+    const status = err.status || 500;
+    res.status(status).json({
       success: false,
       error: `Could not create Sandbox order: ${err.message}`
     });
   }
 }
 
-app.post('/api/paypal/create-test-order', orderRateLimiter, handleCreateSandboxOrder);
+app.post('/api/paypal/create-test-order', orderRateLimiter, (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return requireMerchantOrOperatorAuth(req, res, () => handleCreateSandboxOrder(req, res));
+  }
+  return handleCreateSandboxOrder(req, res);
+});
 app.post('/api/paypal/orders', orderRateLimiter, handleCreateSandboxOrder);
 
 // Set to track in-flight captures and prevent concurrent requests
@@ -1366,35 +1371,44 @@ export async function addPayPalOrderTracking(orderId, trackingData = {}) {
   const token = await getValidAccessToken();
   let paypalTrackerResponse = null;
 
-  // 3. Dispatch to official PayPal Shipping Trackers API if captureId exists
+  // 3. Dispatch to official PayPal Shipping Trackers API
   if (currentOrder.captureId) {
-    try {
-      const trackerRes = await fetch(`${PAYPAL_BASE_URL}/v2/shipping/trackers`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          transaction_id: currentOrder.captureId,
-          tracking_number: trackingNumber,
-          status,
-          carrier
-        })
-      });
+    const trackerRes = await fetch(`${PAYPAL_BASE_URL}/v2/shipping/trackers`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        transaction_id: currentOrder.captureId,
+        tracking_number: trackingNumber,
+        status,
+        carrier
+      })
+    });
 
-      if (trackerRes.ok) {
-        paypalTrackerResponse = await trackerRes.json();
-      } else {
-        const trackerErr = await trackerRes.json().catch(() => ({}));
-        console.warn(`[PayPal Tracker API Notice ${trackerRes.status}]:`, trackerErr.message || trackerErr);
-      }
-    } catch (apiErr) {
-      console.warn('[PayPal Tracker API Network Notice]:', apiErr.message);
+    if (!trackerRes.ok) {
+      const trackerErr = await trackerRes.json().catch(() => ({}));
+      const err = new Error(`PayPal Shipping Tracker API failed (${trackerRes.status}): ${trackerErr.message || trackerErr.name || 'Carrier tracking registration rejected by PayPal.'}`);
+      err.status = trackerRes.status;
+      err.details = trackerErr.details || [];
+      throw err;
     }
+
+    paypalTrackerResponse = await trackerRes.json();
+  } else {
+    const err = new Error(`Cannot register carrier tracking: PayPal capture transaction ID not found for order ${cleanOrderId}.`);
+    err.status = 422;
+    err.code = 'MISSING_CAPTURE_ID';
+    throw err;
   }
 
-  const trackerId = paypalTrackerResponse?.id || `TRK-${cleanOrderId}-${Date.now().toString(36).toUpperCase()}`;
+  const trackerId = paypalTrackerResponse?.id || paypalTrackerResponse?.tracker_id;
+  if (!trackerId) {
+    const err = new Error('PayPal Tracker API responded without an authoritative tracker ID.');
+    err.status = 502;
+    throw err;
+  }
 
   // 4. Update in-memory session cached order state
   const existingIndex = sessionState.cachedOrders.findIndex(o => o.id === cleanOrderId);
@@ -1650,6 +1664,8 @@ export function evaluateOrderForensics(verifiedOrder) {
     commercialHealth,
     headline,
     confidence,
+    confidenceClassification: 'DETERMINISTIC_RULE_CERTAINTY',
+    confidenceBasis: 'Heuristic rule match based on authoritative PayPal order status and payment capture state.',
     syncTime,
     verifiedFacts,
     confirmedFailures,
@@ -3558,22 +3574,35 @@ export async function recoverOrderFulfillment(orderId, options = {}) {
 
   // If order is captured, synchronize carrier tracking and fulfillment
   const carrier = options.carrier || 'UPS';
-  const trackingNumber = options.trackingNumber || `1Z${Math.floor(1000000000000000 + Math.random() * 9000000000000000)}`;
+  const trackingNumber = options.trackingNumber;
+
+  if (!trackingNumber || typeof trackingNumber !== 'string' || !trackingNumber.trim()) {
+    return {
+      success: false,
+      recovered: false,
+      code: 'MISSING_TRACKING_NUMBER',
+      message: 'Explicit carrier tracking number is required to fulfill and register tracking with PayPal.',
+      order,
+      forensics
+    };
+  }
 
   let trackingResult;
   try {
     trackingResult = await addPayPalOrderTracking(cleanOrderId, {
       carrier,
-      trackingNumber,
+      trackingNumber: trackingNumber.trim(),
       status: 'SHIPPED',
       notifyPayer: true
     });
   } catch (err) {
-    trackingResult = {
-      carrier,
-      trackingNumber,
-      status: 'SHIPPED',
-      simulatedFallback: true
+    return {
+      success: false,
+      recovered: false,
+      code: 'TRACKING_REGISTRATION_FAILED',
+      message: `Carrier tracking registration failed with PayPal: ${err.message}`,
+      order,
+      forensics
     };
   }
 
@@ -3946,9 +3975,13 @@ app.get('/api/paypal/disputes', async (req, res) => {
 
     res.json({
       success: true,
-      connected: true,
-      provider: 'PayPal Sandbox Disputes v1',
+      connected: isLiveConnected,
+      liveConnected: isLiveConnected,
+      provider: isLiveConnected ? 'PayPal Sandbox Disputes v1' : 'Sandbox Recorded Ledger',
       endpoint: `${config.paypal.baseUrl}/v1/customer/disputes`,
+      notice: isLiveConnected
+        ? 'Authoritative PayPal Disputes v1 live stream active.'
+        : 'PayPal REST application requires "Customer Disputes" permission on developer.paypal.com. Serving recorded sandbox disputes ledger.',
       count: allDisputes.length,
       items: allDisputes,
       disputes: allDisputes

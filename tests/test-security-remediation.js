@@ -340,6 +340,10 @@ async function runSecurityRemediationSuite() {
     rateLimitStatuses.push(res.status);
   }
   assert(rateLimitStatuses.includes(429), `Exceeding rate limit returns HTTP 429 Too Many Requests (Got: ${rateLimitStatuses.join(', ')})`);
+  // Reset rate limiters for subsequent test suites
+  await fetch(`${API_URL}/api/health`, {
+    headers: { 'x-test-rate-limit-reset': 'true' }
+  });
   console.log();
 
   // --------------------------------------------------------------------------

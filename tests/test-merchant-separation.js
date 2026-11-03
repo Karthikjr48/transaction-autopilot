@@ -63,6 +63,11 @@ async function runSuite() {
   console.log('🛡️ TRANSACTION-AUTOPILOT — MERCHANT & BACKEND OPERATIONS SEPARATION AUDIT');
   console.log('======================================================================\n');
 
+  // Reset rate limit buckets before running suite
+  await requestJson(`${API_URL}/api/health`, {
+    headers: { 'x-test-rate-limit-reset': 'true' }
+  });
+
   // Step 1: Create a test order via PayPal Sandbox Orders v2
   console.log('[Section 1: Test Order Generation & Authoritative Setup]');
   const createRes = await requestJson(`${API_URL}/api/paypal/create-test-order`, {

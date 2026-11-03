@@ -23,7 +23,8 @@ const FILES = {
   WEBHOOKS: path.join(DATA_DIR, 'webhook-events.json'),
   PROCESSED_WEBHOOKS: path.join(DATA_DIR, 'processed-webhook-ids.json'),
   IDEMPOTENCY_KEYS: path.join(DATA_DIR, 'order-idempotency.json'),
-  MERCHANT_SETTINGS: path.join(DATA_DIR, 'merchant-settings.json')
+  MERCHANT_SETTINGS: path.join(DATA_DIR, 'merchant-settings.json'),
+  SESSIONS: path.join(DATA_DIR, 'sessions.json')
 };
 
 // Ensure data directory exists
@@ -369,6 +370,38 @@ export function saveMerchantSettings(settings) {
   const updated = { ...current, ...(settings || {}), updatedAt: new Date().toISOString() };
   writeJsonFileAtomic(FILES.MERCHANT_SETTINGS, updated);
   return updated;
+}
+
+// ---------------------------------------------------------------------------
+// 7. SESSION PERSISTENCE (Zero Session Loss Across Restarts)
+// ---------------------------------------------------------------------------
+export function loadSessions() {
+  const saved = readJsonFile(FILES.SESSIONS, {});
+  if (!saved || typeof saved !== 'object') return {};
+  const now = Date.now();
+  const valid = {};
+  for (const [id, session] of Object.entries(saved)) {
+    if (session && session.expiresAt && now < session.expiresAt) {
+      valid[id] = session;
+    }
+  }
+  return valid;
+}
+
+export function saveSessionToDisk(session) {
+  if (!session || !session.id) return;
+  const sessions = loadSessions();
+  sessions[session.id] = session;
+  writeJsonFileAtomic(FILES.SESSIONS, sessions);
+}
+
+export function deleteSessionFromDisk(sessionId) {
+  if (!sessionId) return;
+  const sessions = loadSessions();
+  if (sessions[sessionId]) {
+    delete sessions[sessionId];
+    writeJsonFileAtomic(FILES.SESSIONS, sessions);
+  }
 }
 
 // ---------------------------------------------------------------------------
