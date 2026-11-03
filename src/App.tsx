@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   LayoutGrid, ReceiptText, Link2, FileText, Bot, ShieldAlert,
   ClipboardList, Settings2, ChevronDown, CircleHelp, LogOut, LogIn,
-  Search, ShieldCheck, UserRound, ShoppingCart, Terminal, X,
+  Search, ShieldCheck, UserRound, ShoppingCart, X,
 } from 'lucide-react'
 import paypalLogo from './assets/paypal-logo.png'
 import { Overview } from './components/Overview'
@@ -242,25 +242,6 @@ export default function App() {
             </div>
           )
         })}
-
-        {/* Developer Console in Mobile Drawer */}
-        {isMobile && (
-          <div className="pt-2 border-t border-white/10">
-            <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40">
-              Operations
-            </div>
-            <button
-              onClick={() => {
-                setSidebarOpen(false)
-                navigate('/developer')
-              }}
-              className="flex h-11 w-full items-center gap-3.5 rounded-xl px-3.5 text-sm font-semibold text-emerald-300 hover:bg-white/10 transition-all"
-            >
-              <Terminal className="size-[19px] shrink-0 text-emerald-400" />
-              <span>Developer Console</span>
-            </button>
-          </div>
-        )}
       </nav>
 
       {/* Clean Merchant Footer (Pinned, never overlaps nav) */}
@@ -345,16 +326,6 @@ export default function App() {
           <span className="hidden xl:inline">Help</span>
         </button>
 
-        {/* Developer / Operations Console Shortcut */}
-        <button
-          onClick={() => navigate('/developer')}
-          title="Open Developer & Operations Console"
-          className="mr-2 flex h-10 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 transition-colors shadow-2xs"
-        >
-          <Terminal className="size-3.5 text-brand" />
-          <span className="hidden sm:inline">Developer Console</span>
-        </button>
-
         {/* Profile / Account Menu */}
         <div className="relative" ref={menuRef}>
           <button
@@ -395,9 +366,6 @@ export default function App() {
               </MenuItem>
               <MenuItem Icon={ShieldCheck} onClick={() => { setMenu(false); setModal(true) }}>
                 Privacy Preferences
-              </MenuItem>
-              <MenuItem Icon={Terminal} onClick={() => { setMenu(false); navigate('/developer') }}>
-                Developer Console
               </MenuItem>
 
               <hr className="my-1 border-line" />
