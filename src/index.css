@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+/* Provisional tokens sampled from the supplied screenshot; confirm against official brand specs. */
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --color-navy-950: #001a3d;
+  --color-navy-900: #00214f;
+  --color-navy-800: #022b63;
+  --color-navy-700: #0a3a7a;
+  --color-brand: #003087;
+  --color-brand-hover: #00266b;
+  --color-link: #0057ff;
+  --color-field: #dadddd;
+  --color-err: #d9360b;
+  --color-ink: #010b0d;
+  --color-ink-2: #5b6b82;
+  --color-line: #e3e8ef;
+  --color-canvas: #f5f7fa;
+  --color-ok-bg: #e3f6ea;
+  --color-ok-fg: #12703a;
+  --color-warn-bg: #fff3d6;
+  --color-warn-fg: #8a5300;
+  --color-err-bg: #fde8e8;
+  --color-err-fg: #a4262c;
+  --color-info-bg: #e6f0fd;
+  --color-info-fg: #0b4fa8;
+}
+
+@layer base {
+  html {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  button,
+  a,
+  select,
+  input,
+  [role='switch'] {
+    transition:
+      background-color 0.15s,
+      border-color 0.15s,
+      box-shadow 0.15s,
+      color 0.15s;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 3px solid #5aa9ff;
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: #cfe3ff;
+  }
+}
+
+/* ==========================================================================
+   Fintech Custom Slim Scrollbars (Desktop & Responsive)
+   ========================================================================== */
+
+/* 1. Global Document & General Container Scrollbars (Chromium, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* Subtle slate neutral */
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* Clear hover state */
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #64748b; /* Active dragging state */
+}
+
+/* 2. Dedicated Slim Sidebar Scrollbar (Navy-themed) */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  overscroll-behavior: contain;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+/* 3. Horizontal Table Scrollbars */
+.table-scroll,
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+
+.table-scroll::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.anim-pop {
+  animation: pop 0.16s ease-out;
+}
+.anim-slide {
+  animation: slide-in 0.2s ease-out;
+}
+.skeleton {
+  background: linear-gradient(90deg, #eef1f6 25%, #f7f9fc 50%, #eef1f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .anim-pop,
+  .anim-slide,
+  .skeleton {
+    animation: none;
+  }
+}
