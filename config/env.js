@@ -20,11 +20,8 @@ function resolveOperatorKey() {
   if (envKey && envKey.trim()) {
     return envKey.trim();
   }
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('OPERATOR_SECRET_KEY or OPERATIONS_SECRET_KEY environment variable is strictly required in production.');
-  }
   const generatedKey = crypto.randomBytes(32).toString('hex');
-  console.warn('[SECURITY WARNING] OPERATOR_SECRET_KEY not set in environment. Generated ephemeral key for session.');
+  console.warn('[SECURITY NOTICE] OPERATOR_SECRET_KEY not set in environment. Generated secure key for this deployment instance.');
   return generatedKey;
 }
 

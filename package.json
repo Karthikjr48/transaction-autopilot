@@ -14,6 +14,11 @@
     "start:ui": "node ui-server.js"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -21,18 +26,16 @@
     "lucide-react": "^1.61.0",
     "nodemailer": "^10.2.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.0",
-    "puppeteer-core": "^25.14.0",
+    "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vite": "^8.0.5"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.14.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "license": "MIT"
 }
