@@ -80,7 +80,7 @@ The core forensic innovation is reconciling three separate lifecycle vectors acr
 - **CREATED + UNCAPTURED + TRACKING_UNAVAILABLE**: Commercial Health = `PENDING_BUYER_ACTION`. Order is waiting for buyer authorization in checkout. Shipping is strictly blocked.
 - **APPROVED + UNCAPTURED + AWAITING_CAPTURE**: Commercial Health = `ACTION_REQUIRED_CAPTURE`. Buyer has authorized; funds are ready for capture via operator confirmation.
 - **COMPLETED + COMPLETED + MISSING_TRACKING**: Commercial Health = `COMMERCIALLY_INCOMPLETE`. Funds settled; downstream carrier tracking required to satisfy Seller Protection.
-- **COMPLETED + COMPLETED + TRACKED**: Commercial Health = `HEALTHY`. Nominal transaction state. Seller Protection 100% qualified.
+- **COMPLETED + COMPLETED + TRACKED**: Commercial Health = `HEALTHY`. Nominal transaction state. Valid carrier tracking registered with PayPal; eligible for PayPal Seller Protection evaluation per PayPal policy guidelines.
 
 ---
 
@@ -97,7 +97,7 @@ The core forensic innovation is reconciling three separate lifecycle vectors acr
 
 ### Step 2: Live Activity & Order Generation
 1. Switch to the **Activity** tab.
-2. Click **+ Generate Sandbox Test Order** (or select active order `8UC45598PW2909820`).
+2. Click **+ Generate Sandbox Test Order** (or select any active Sandbox order from your activity list).
 3. The backend calls PayPal Orders v2 API `POST /v2/checkout/orders` with intent `CAPTURE`.
 4. A genuine Sandbox order is created in PayPal's cloud with status `CREATED`.
 

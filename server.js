@@ -91,15 +91,17 @@ const trustedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (
-      !origin ||
-      trustedOrigins.includes(origin) ||
-      /\.(onrender\.com|koyeb\.app|railway\.app|trycloudflare\.com|loca\.lt)$/i.test(new URL(origin).hostname)
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error('Cross-origin request blocked by security policy.'));
+    if (!origin) {
+      return callback(null, true);
     }
+    try {
+      const parsed = new URL(origin);
+      const normalizedOrigin = `${parsed.protocol}//${parsed.host}`;
+      if (trustedOrigins.includes(normalizedOrigin) || trustedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+    } catch (_) {}
+    return callback(new Error('Cross-origin request blocked by security policy.'));
   },
   credentials: true
 }));
@@ -183,13 +185,13 @@ app.get('/api/auth/session', (req, res) => {
     });
   }
 
-  // Issue fresh merchant session if unauthenticated browser
-  const session = createSession({ role: 'merchant', req });
+  // Issue unauthenticated guest session with anti-CSRF token (Zero auth bypass)
+  const session = createSession({ role: 'guest', req, authenticated: false });
   setAuthCookies(res, session);
   return res.json({
     success: true,
-    authenticated: true,
-    role: session.role,
+    authenticated: false,
+    role: 'guest',
     csrfToken: session.csrfToken
   });
 });
@@ -210,11 +212,11 @@ app.post('/api/auth/logout', (req, res) => {
 // Dedicated CSRF token & session bootstrap endpoints
 app.get('/api/csrf-token', (req, res) => {
   const auth = authenticateRequest(req);
-  if (auth.authenticated && auth.session) {
+  if (auth.session) {
     setAuthCookies(res, auth.session);
     return res.json({ success: true, csrfToken: auth.session.csrfToken });
   }
-  const session = createSession({ role: 'merchant', req });
+  const session = createSession({ role: 'guest', req, authenticated: false });
   setAuthCookies(res, session);
   res.json({ success: true, csrfToken: session.csrfToken });
 });
@@ -230,12 +232,12 @@ app.get('/api/session/init', (req, res) => {
       csrfToken: auth.session.csrfToken
     });
   }
-  const session = createSession({ role: 'merchant', req });
+  const session = createSession({ role: 'guest', req, authenticated: false });
   setAuthCookies(res, session);
   res.json({
     success: true,
-    authenticated: true,
-    role: session.role,
+    authenticated: false,
+    role: 'guest',
     csrfToken: session.csrfToken
   });
 });
@@ -2649,7 +2651,11 @@ function handleMerchantOverview(req, res) {
     const emailStats = getOperationalEmailStats();
     const smtpHealth = emailService.getSanitizedSmtpStatus();
     const orders = sessionState.cachedOrders || [];
-    const truthfulAnalytics = computeTruthfulAnalytics(orders, sessionState.refunds || []);
+    const currentDisputes = getDisputes();
+    const truthfulAnalytics = computeTruthfulAnalytics(orders, sessionState.refunds || [], {
+      disputes: currentDisputes,
+      disputesConnected: Boolean(sessionState.disputesConnected)
+    });
 
     const totalOrders = orders.length;
     const pendingCustomerAction = orders.filter(o => o.paypalStatus === 'CREATED' || o.paypalStatus === 'APPROVED').length;
@@ -3711,8 +3717,8 @@ export async function verifyPayPalWebhookSignature(headers, body, getAccessToken
     return { verified: false, error: 'Malformed certificate URL.' };
   }
 
-  // Mock verification bypass for automated test suites
-  if (headers['x-mock-verify'] === 'true') {
+  // Mock verification bypass for automated test suites (STRICTLY NON-PRODUCTION ONLY)
+  if (process.env.NODE_ENV !== 'production' && headers['x-mock-verify'] === 'true') {
     return { verified: true, status: 'SUCCESS' };
   }
 
@@ -3774,9 +3780,17 @@ const handleWebhookIngest = async (req, res) => {
       req.headers['x-simulation-test'] === 'true'
     );
 
+    // In production, reject simulated webhooks on authoritative endpoint
+    if (process.env.NODE_ENV === 'production' && isSimulated) {
+      return res.status(400).json({
+        success: false,
+        error: 'Simulated events are not accepted on the production webhook endpoint.'
+      });
+    }
+
     // 1. Mandatory Header Verification for every webhook (live and sandbox)
     if (!transmissionId || !transmissionTime || !certUrl || !transmissionSig || !authAlgo) {
-      if (!isSimulated) {
+      if (!isSimulated || process.env.NODE_ENV === 'production') {
         return res.status(401).json({
           success: false,
           error: 'Missing required PayPal webhook signature headers.'

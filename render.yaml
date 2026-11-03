@@ -28,6 +28,10 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: noreply@transaction-autopilot.com
+      - key: MERCHANT_EMAIL
+        value: merchant@transaction-autopilot.com
+      - key: MERCHANT_PASSWORD
+        generateValue: true
       - key: OPERATIONS_SECRET_KEY
         generateValue: true
       - key: SESSION_SECRET

@@ -397,7 +397,12 @@ async function runSuite() {
     }
   });
 
-  const merchantSummary = await requestJson(`${API_URL}/api/merchant/orders/8UC45598PW2909820/summary`);
+  let sampleOrderId = ordersList[0]?.id;
+  if (!sampleOrderId) {
+    const createRes = await requestJson(`${API_URL}/api/paypal/create-test-order`, { method: 'POST' });
+    sampleOrderId = createRes.body?.order?.id;
+  }
+  const merchantSummary = await requestJson(`${API_URL}/api/merchant/orders/${sampleOrderId}/summary`);
   const summaryData = merchantSummary.body?.summary || {};
 
   check('Merchant order summary strictly omits financial amount and currency', () => {

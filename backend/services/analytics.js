@@ -7,7 +7,7 @@
 /**
  * Compute truthful analytics from verified PayPal Sandbox orders
  */
-export function computeTruthfulAnalytics(orders = [], refunds = []) {
+export function computeTruthfulAnalytics(orders = [], refunds = [], options = {}) {
   const totalCount = orders.length;
 
   let totalVolume = 0;
@@ -131,18 +131,18 @@ export function computeTruthfulAnalytics(orders = [], refunds = []) {
     healthyCount: capturedCount,
     attentionCount: createdCount + approvedCount,
     criticalCount: failedCount,
-    disputeRiskScore: failedCount > 0 ? 'Elevated (Attention Required)' : 'Minimal (0.0%)',
-    settlementVelocity: 'Instant Settlement',
+    disputeRiskScore: (options.disputes?.length > 0) ? 'Elevated (Disputes Reported)' : (failedCount > 0 ? 'Elevated (Attention Required)' : 'Minimal (0.0%)'),
+    settlementVelocity: capturedCount > 0 ? 'Standard Settlement (Instant)' : 'Pending First Capture',
     refunds: {
       count: refundCount,
       totalAmount: totalRefundsAmount,
       currency: 'USD'
     },
     disputes: {
-      connected: false,
-      count: null,
-      status: 'DISPUTES_API_UNCONNECTED',
-      displayMessage: 'Disputes API not connected (Integration required)'
+      connected: Boolean(options.disputesConnected),
+      count: Array.isArray(options.disputes) ? options.disputes.length : null,
+      status: Boolean(options.disputesConnected) ? (options.disputes?.length ? 'ACTIVE_DISPUTES' : 'CLEAN') : 'DISPUTES_API_UNCONNECTED',
+      displayMessage: Boolean(options.disputesConnected) ? `${options.disputes?.length || 0} recorded disputes` : 'Disputes API not connected (Integration required)'
     },
     hasData: totalCount > 0,
     dailyVolume,

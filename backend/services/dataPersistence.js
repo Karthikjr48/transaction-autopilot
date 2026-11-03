@@ -13,6 +13,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 
@@ -139,25 +140,8 @@ export function saveOrder(order) {
 }
 
 export function getOrder(orderId) {
-  if (ordersMap.has(orderId)) return ordersMap.get(orderId);
-  if (orderId === '8UC45598PW2909820') {
-    return {
-      id: '8UC45598PW2909820',
-      paypalReference: 'ORD-637403',
-      amount: 31.00,
-      currency: 'USD',
-      timestamp: '2026-10-18T05:33:57Z',
-      paypalStatus: 'CREATED',
-      captureStatus: 'UNCAPTURED',
-      payerEmail: null,
-      payerName: null,
-      shippingAddress: null,
-      trackingNumber: null,
-      fulfillmentStatus: 'TRACKING_UNAVAILABLE',
-      source: 'PayPal Orders v2'
-    };
-  }
-  return null;
+  if (!orderId || typeof orderId !== 'string') return null;
+  return ordersMap.get(orderId) || null;
 }
 
 export function getAllOrders() {
@@ -373,16 +357,21 @@ export function saveMerchantSettings(settings) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. SESSION PERSISTENCE (Zero Session Loss Across Restarts)
+// 7. SESSION PERSISTENCE (Hashed Token Storage Across Restarts)
 // ---------------------------------------------------------------------------
+export function hashSessionKey(id) {
+  if (!id || typeof id !== 'string') return '';
+  return crypto.createHash('sha256').update(String(id)).digest('hex');
+}
+
 export function loadSessions() {
   const saved = readJsonFile(FILES.SESSIONS, {});
   if (!saved || typeof saved !== 'object') return {};
   const now = Date.now();
   const valid = {};
-  for (const [id, session] of Object.entries(saved)) {
+  for (const [hashKey, session] of Object.entries(saved)) {
     if (session && session.expiresAt && now < session.expiresAt) {
-      valid[id] = session;
+      valid[hashKey] = session;
     }
   }
   return valid;
@@ -391,15 +380,20 @@ export function loadSessions() {
 export function saveSessionToDisk(session) {
   if (!session || !session.id) return;
   const sessions = loadSessions();
-  sessions[session.id] = session;
+  const hashKey = hashSessionKey(session.id);
+  // Store session with cryptographic hash key, stripping plaintext ID from stored entity
+  const { id, ...safeSession } = session;
+  safeSession.sessionHash = hashKey;
+  sessions[hashKey] = safeSession;
   writeJsonFileAtomic(FILES.SESSIONS, sessions);
 }
 
 export function deleteSessionFromDisk(sessionId) {
   if (!sessionId) return;
   const sessions = loadSessions();
-  if (sessions[sessionId]) {
-    delete sessions[sessionId];
+  const hashKey = hashSessionKey(sessionId);
+  if (sessions[hashKey]) {
+    delete sessions[hashKey];
     writeJsonFileAtomic(FILES.SESSIONS, sessions);
   }
 }

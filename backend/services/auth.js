@@ -6,7 +6,7 @@
 
 import crypto from 'crypto';
 import { config } from '../../config/env.js';
-import { loadSessions, saveSessionToDisk, deleteSessionFromDisk } from './dataPersistence.js';
+import { loadSessions, saveSessionToDisk, deleteSessionFromDisk, hashSessionKey } from './dataPersistence.js';
 
 // In-memory active session store: sessionId -> session object
 const activeSessions = new Map();
@@ -14,8 +14,10 @@ const activeSessions = new Map();
 // Hydrate persistent sessions on module load (zero session loss across restarts)
 try {
   const persisted = loadSessions();
-  for (const [sid, sess] of Object.entries(persisted)) {
-    activeSessions.set(sid, sess);
+  for (const [hashKey, sess] of Object.entries(persisted)) {
+    if (sess && sess.id) {
+      activeSessions.set(sess.id, sess);
+    }
   }
 } catch (_) {}
 
@@ -56,10 +58,13 @@ export function parseCookies(req) {
 
 /**
  * Create a new cryptographically secure session
+ * By default unauthenticated callers receive an unauthenticated 'guest' session.
+ * Merchant role is strictly granted ONLY upon successful merchant credentials verification.
  */
-export function createSession({ role = 'merchant', req = null, existingSessionId = null } = {}) {
+export function createSession({ role = 'guest', req = null, existingSessionId = null, authenticated = false } = {}) {
   const isOperator = role === 'operations' || role === 'operator';
-  const prefix = isOperator ? 'ops_sess' : 'merch_sess';
+  const isMerchant = role === 'merchant';
+  const prefix = isOperator ? 'ops_sess' : (isMerchant ? 'merch_sess' : 'guest_sess');
   const sessionId = generateSecureToken(prefix, 32);
   const csrfToken = generateSecureToken('csrf', 24);
   const now = Date.now();
@@ -67,9 +72,13 @@ export function createSession({ role = 'merchant', req = null, existingSessionId
   const ipFamily = req?.socket?.remoteFamily || 'IPv4';
   const userAgent = req?.headers?.['user-agent'] || 'unknown';
 
+  const assignedRole = isOperator ? 'operations' : (isMerchant ? 'merchant' : 'guest');
+  const isAuth = Boolean(authenticated || isOperator || isMerchant);
+
   const session = {
     id: sessionId,
-    role: isOperator ? 'operations' : 'merchant',
+    role: assignedRole,
+    authenticated: isAuth,
     csrfToken,
     createdAt: now,
     expiresAt: now + ABSOLUTE_TTL_MS,
@@ -79,8 +88,10 @@ export function createSession({ role = 'merchant', req = null, existingSessionId
   };
 
   // Invalidate previous session if rotating
-  if (existingSessionId && activeSessions.has(existingSessionId)) {
-    activeSessions.delete(existingSessionId);
+  if (existingSessionId) {
+    if (activeSessions.has(existingSessionId)) {
+      activeSessions.delete(existingSessionId);
+    }
     deleteSessionFromDisk(existingSessionId);
   }
 
@@ -94,7 +105,20 @@ export function createSession({ role = 'merchant', req = null, existingSessionId
  */
 export function getSession(sessionId) {
   if (!sessionId || typeof sessionId !== 'string') return null;
-  const session = activeSessions.get(sessionId);
+  let session = activeSessions.get(sessionId);
+
+  // Hydrate from persistent storage if memory was cleared or server restarted
+  if (!session) {
+    try {
+      const persisted = loadSessions();
+      const hashKey = hashSessionKey(sessionId);
+      if (persisted[hashKey]) {
+        session = { ...persisted[hashKey], id: sessionId };
+        activeSessions.set(sessionId, session);
+      }
+    } catch (_) {}
+  }
+
   if (!session) return null;
 
   const now = Date.now();
@@ -326,8 +350,9 @@ export function authenticateRequest(req) {
   if (sessionId) {
     const session = getSession(sessionId);
     if (session) {
+      const isAuthRole = session.role === 'operations' || session.role === 'operator' || session.role === 'merchant';
       return {
-        authenticated: true,
+        authenticated: Boolean(session.authenticated && isAuthRole),
         role: session.role,
         session,
         authType: 'cookie'
@@ -381,10 +406,10 @@ export function requireOperatorAuth(req, res, next) {
  */
 export function requireMerchantOrOperatorAuth(req, res, next) {
   const auth = authenticateRequest(req);
-  if (!auth.authenticated) {
+  if (!auth.authenticated || (auth.role !== 'merchant' && auth.role !== 'operations' && auth.role !== 'operator')) {
     return res.status(401).json({
       success: false,
-      error: 'Unauthorized: Valid session or API credentials required.'
+      error: 'Unauthorized: Valid Merchant or Operator session required.'
     });
   }
 

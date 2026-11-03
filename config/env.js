@@ -25,6 +25,32 @@ function resolveOperatorKey() {
   return generatedKey;
 }
 
+// Secure resolution of Merchant credentials without static password in production
+function resolveMerchantCredentials() {
+  const email = (process.env.MERCHANT_EMAIL || '').trim();
+  const password = (process.env.MERCHANT_PASSWORD || '').trim();
+
+  if (process.env.NODE_ENV !== 'production') {
+    return {
+      email: email || 'merchant@paypal-portal.local',
+      password: password || 'MerchantSecure2026!'
+    };
+  }
+
+  // Production: Enforce dynamically generated or explicit environment credentials
+  if (email && password) {
+    return { email, password };
+  }
+
+  // Dynamic high-entropy instance credentials if unset in production (disables static default)
+  const dynamicPassword = crypto.randomBytes(24).toString('base64url');
+  console.warn('[SECURITY NOTICE] MERCHANT_PASSWORD not set in production. Generated dynamic instance credentials; static default is disabled.');
+  return {
+    email: email || 'merchant@transaction-autopilot.onrender.com',
+    password: password || dynamicPassword
+  };
+}
+
 export const config = {
   // Network Ports & URLs
   port: parseInt(process.env.PORT || '5000', 10),
@@ -59,10 +85,7 @@ export const config = {
   },
 
   // Merchant Account Configuration
-  merchant: {
-    email: process.env.MERCHANT_EMAIL || 'merchant@paypal-portal.local',
-    password: process.env.MERCHANT_PASSWORD || 'MerchantSecure2026!'
-  },
+  merchant: resolveMerchantCredentials(),
 
   // Email & Invoice Delivery Provider Configuration
   email: {

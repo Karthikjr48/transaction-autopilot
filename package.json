@@ -1,6 +1,6 @@
 {
   "name": "paypal-merchant-portal",
-  "version": "1.0.0",
+  "version": "2.4.0",
   "description": "PayPal Commerce React Portal with Sandbox API Backend",
   "type": "module",
   "scripts": {
@@ -11,7 +11,8 @@
     "start": "node server.js",
     "start:dual": "node start-all.js",
     "start:server": "node server.js",
-    "start:ui": "node ui-server.js"
+    "start:ui": "node ui-server.js",
+    "test:all": "node tests/test-all.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.0",

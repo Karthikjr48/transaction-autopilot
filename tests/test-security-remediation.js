@@ -143,11 +143,20 @@ async function runSecurityRemediationSuite() {
   });
   assert(spoofedRole.status === 401, `Role spoofing header rejected with HTTP 401 (Got: ${spoofedRole.status})`);
 
+  // Check 6.2: Anonymous session verification (Finding 1: Zero Auth Bypass)
+  const anonSess = await requestJson(`${API_URL}/api/auth/session`);
+  assert(anonSess.body?.authenticated === false, 'Anonymous session has authenticated === false (Zero Auth Bypass)');
+  assert(anonSess.body?.role === 'guest', 'Anonymous session receives unauthenticated role: guest');
+
   // Check 7: Merchant session attempting operator route
-  const merchantSess = await requestJson(`${API_URL}/api/auth/session`);
-  const setCookies = merchantSess.rawHeaders.getSetCookie ? merchantSess.rawHeaders.getSetCookie() : [merchantSess.headers['set-cookie']];
+  const loginRes = await requestJson(`${API_URL}/api/merchant/login`, {
+    method: 'POST',
+    body: { email: 'merchant@paypal-portal.local', password: 'MerchantSecure2026!' }
+  });
+  assert(loginRes.status === 200 && loginRes.body?.role === 'merchant', 'Merchant authenticated successfully with legitimate merchant credentials');
+  const setCookies = loginRes.rawHeaders.getSetCookie ? loginRes.rawHeaders.getSetCookie() : [loginRes.headers['set-cookie']];
   const merchantCookie = setCookies.map(c => c.split(';')[0]).join('; ');
-  const merchantCsrf = merchantSess.body?.csrfToken;
+  const merchantCsrf = loginRes.body?.csrfToken;
 
   const merchantOpAttempt = await requestJson(`${API_URL}/api/agent/analyze`, {
     method: 'POST',
@@ -164,9 +173,9 @@ async function runSecurityRemediationSuite() {
   // Check 8: Modern Cookie Security Attributes
   // --------------------------------------------------------------------------
   console.log('[Check 8: Cookie Security Attributes]');
-  const cookieHeaderList = merchantSess.rawHeaders.getSetCookie
-    ? merchantSess.rawHeaders.getSetCookie()
-    : [merchantSess.headers['set-cookie']];
+  const cookieHeaderList = loginRes.rawHeaders.getSetCookie
+    ? loginRes.rawHeaders.getSetCookie()
+    : [loginRes.headers['set-cookie']];
   const sessionCookie = cookieHeaderList.find(c => c.includes('session_id='));
 
   assert(Boolean(sessionCookie), 'Session cookie is set in response');
