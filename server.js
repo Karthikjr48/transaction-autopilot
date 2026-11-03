@@ -4589,30 +4589,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// Operations & Developer Console Web Routes
-app.get('/operations', (req, res) => {
-  res.sendFile(path.join(__dirname, 'operations.html'));
-});
-
-app.get('/operations.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'operations.html'));
-});
-
-app.get('/developer', (req, res) => {
-  res.sendFile(path.join(__dirname, 'operations.html'));
-});
-
-app.get('/developer.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'operations.html'));
-});
-
-// Merchant Login Web Route
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/login.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
+// Operations & Developer Console Web Routes (Serve React SPA)
+app.get(['/operations', '/operations.html', '/developer', '/developer.html', '/login', '/login.html'], (req, res, next) => {
+  const distIndex = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(distIndex)) {
+    return res.sendFile(distIndex);
+  }
+  const legacyFile = path.join(__dirname, 'operations.html');
+  if (fs.existsSync(legacyFile)) {
+    return res.sendFile(legacyFile);
+  }
+  next();
 });
 
 // Standalone / Production Single-Port Hosting: Serve built React SPA

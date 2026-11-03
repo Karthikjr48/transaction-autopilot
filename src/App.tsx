@@ -305,6 +305,16 @@ export default function App() {
           <span className="hidden xl:inline">Help</span>
         </button>
 
+        {/* Developer / Operations Console Shortcut */}
+        <button
+          onClick={() => navigate('/developer')}
+          title="Open Developer & Operations Console"
+          className="mr-2 flex h-10 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 transition-colors shadow-2xs"
+        >
+          <Terminal className="size-3.5 text-brand" />
+          <span className="hidden sm:inline">Developer Console</span>
+        </button>
+
         {/* Profile / Account Menu */}
         <div className="relative" ref={menuRef}>
           <button
@@ -345,6 +355,9 @@ export default function App() {
               </MenuItem>
               <MenuItem Icon={ShieldCheck} onClick={() => { setMenu(false); setModal(true) }}>
                 Privacy Preferences
+              </MenuItem>
+              <MenuItem Icon={Terminal} onClick={() => { setMenu(false); navigate('/developer') }}>
+                Developer Console
               </MenuItem>
 
               <hr className="my-1 border-line" />
