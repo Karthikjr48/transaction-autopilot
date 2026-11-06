@@ -4228,6 +4228,26 @@ app.post('/api/paypal/disputes/simulate', (req, res) => {
 
     saveDispute(disputeRecord);
 
+    // Ensure the linked order exists in order persistence and sandbox cache
+    if (!getOrder(cleanOrderId)) {
+      saveOrder({
+        id: cleanOrderId,
+        paypalReference: 'ORD-' + cleanOrderId.slice(-6),
+        amount: parseFloat(disputeAmt),
+        currency: 'USD',
+        checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=' + cleanOrderId,
+        timestamp: new Date().toISOString(),
+        status: 'CREATED',
+        paypalStatus: 'CREATED',
+        captureStatus: 'UNCAPTURED',
+        capturedAmount: 0,
+        source: 'PayPal Sandbox Dispute Linked Order',
+        payerEmail: 'sandbox-customer@example.com',
+        payerName: 'Sandbox Buyer'
+      });
+      sessionState.cachedOrders = loadOrders();
+    }
+
     // Emit official webhook event for real-time audit trail
     recordWebhookEvent({
       id: `WH-DISP-${disputeId}`,
@@ -4715,6 +4735,32 @@ app.post('/api/merchant/settings', requireMerchantOrOperatorAuth, (req, res) => 
     success: true,
     settings: sessionState.merchantSettings
   });
+});
+
+// Sitemap XML & JSON routes
+app.get(['/sitemap.xml', '/sitemap'], (req, res) => {
+  const routes = [
+    { loc: '/', label: 'Overview', changefreq: 'daily', priority: '1.0' },
+    { loc: '/transactions', label: 'Transactions', changefreq: 'daily', priority: '0.9' },
+    { loc: '/orders', label: 'Orders', changefreq: 'daily', priority: '0.9' },
+    { loc: '/links', label: 'Payment Links', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/invoices', label: 'Invoices', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/disputes', label: 'Disputes & Claims', changefreq: 'daily', priority: '0.8' },
+    { loc: '/ai', label: 'AI Agent & Forensics', changefreq: 'daily', priority: '0.9' },
+    { loc: '/audit', label: 'Audit Log', changefreq: 'daily', priority: '0.7' },
+    { loc: '/settings', label: 'Settings', changefreq: 'monthly', priority: '0.6' }
+  ];
+
+  if (req.path === '/sitemap' || req.query.format === 'json') {
+    return res.json({ success: true, host: req.headers.host || 'transaction-autopilot.onrender.com', routes });
+  }
+
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    routes.map(r => '  <url>\n    <loc>https://' + (req.headers.host || 'transaction-autopilot.onrender.com') + r.loc + '</loc>\n    <changefreq>' + r.changefreq + '</changefreq>\n    <priority>' + r.priority + '</priority>\n  </url>').join('\n') +
+    '\n</urlset>';
+
+  res.header('Content-Type', 'application/xml');
+  res.send(xml);
 });
 
 // API Root descriptor (Serves React Merchant Dashboard if built, operations console as fallback, JSON to API clients)

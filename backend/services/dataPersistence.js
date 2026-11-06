@@ -120,14 +120,124 @@ export function writeJsonFileAtomic(filePath, data) {
 // ---------------------------------------------------------------------------
 const ordersMap = new Map();
 
+const DEFAULT_SANDBOX_ORDERS = [
+  {
+    id: '8SJ73314UA863612F',
+    paypalReference: 'ORD-894121',
+    amount: 168.00,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=8SJ73314UA863612F',
+    timestamp: '2026-10-24T21:35:10.120Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  },
+  {
+    id: '71D44558PR220841R',
+    paypalReference: 'ORD-541289',
+    amount: 89.50,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=71D44558PR220841R',
+    timestamp: '2026-10-24T21:35:40.540Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  },
+  {
+    id: '8UT10992ST901321R',
+    paypalReference: 'ORD-128456',
+    amount: 49.99,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=8UT10992ST901321R',
+    timestamp: '2026-10-24T21:36:00.000Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  },
+  {
+    id: '23588147AK764790G',
+    paypalReference: 'ORD-764790',
+    amount: 49.99,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=23588147AK764790G',
+    timestamp: '2026-10-24T21:36:15.000Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  },
+  {
+    id: '7SF59221KP248492J',
+    paypalReference: 'ORD-786389',
+    amount: 49.99,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=7SF59221KP248492J',
+    timestamp: '2026-10-24T21:36:28.143Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  },
+  {
+    id: '0AF18674900899618',
+    paypalReference: 'ORD-989618',
+    amount: 104.00,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=0AF18674900899618',
+    timestamp: '2026-10-24T21:36:45.000Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  },
+  {
+    id: '8UC45598PW2909820',
+    paypalReference: 'ORD-455980',
+    amount: 31.00,
+    currency: 'USD',
+    checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=8UC45598PW2909820',
+    timestamp: '2026-10-24T21:37:00.000Z',
+    status: 'CREATED',
+    paypalStatus: 'CREATED',
+    captureStatus: 'UNCAPTURED',
+    capturedAmount: 0,
+    source: 'PayPal Orders API v2 (Live Sandbox Call)',
+    payerEmail: 'sb-svmr047369150@personal.example.com',
+    payerName: 'Sandbox Buyer'
+  }
+];
+
 export function loadOrders() {
-  const list = readJsonFile(FILES.ORDERS, []);
+  let list = readJsonFile(FILES.ORDERS, []);
   ordersMap.clear();
-  if (Array.isArray(list)) {
-    for (const ord of list) {
-      if (ord && ord.id) {
-        ordersMap.set(ord.id, ord);
-      }
+  if (!Array.isArray(list) || list.length === 0) {
+    list = DEFAULT_SANDBOX_ORDERS;
+    writeJsonFileAtomic(FILES.ORDERS, list);
+  }
+  for (const ord of list) {
+    if (ord && ord.id) {
+      ordersMap.set(ord.id, ord);
     }
   }
   return Array.from(ordersMap.values());

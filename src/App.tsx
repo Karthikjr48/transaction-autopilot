@@ -37,9 +37,22 @@ const NAV: { id: Page; label: string; Icon: typeof LayoutGrid; group?: string }[
 
 const NONE: Prefs = { functional: false, analytics: false, marketing: false }
 
+const getPageFromPath = (path: string): Page => {
+  const clean = path.replace(/^\/+|\/+$/g, '').toLowerCase()
+  if (clean === 'transactions') return 'transactions'
+  if (clean === 'orders') return 'orders'
+  if (clean === 'links' || clean === 'payment-links') return 'links'
+  if (clean === 'invoices') return 'invoices'
+  if (clean === 'disputes') return 'disputes'
+  if (clean === 'ai' || clean === 'ai-agent') return 'ai'
+  if (clean === 'audit' || clean === 'audit-log') return 'audit'
+  if (clean === 'settings') return 'settings'
+  return 'overview'
+}
+
 export default function App() {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname)
-  const [page, setPage] = useState<Page>('overview')
+  const [page, setPage] = useState<Page>(() => getPageFromPath(window.location.pathname))
   const [txn, setTxn] = useState<any>(null)
   const [menu, setMenu] = useState(false)
   const [consent, setConsent] = useState<Consent>(null)
@@ -54,7 +67,11 @@ export default function App() {
 
   // Listen to browser navigation (back/forward)
   useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname)
+    const handlePopState = () => {
+      const p = window.location.pathname
+      setCurrentPath(p)
+      setPage(getPageFromPath(p))
+    }
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
@@ -94,10 +111,9 @@ export default function App() {
   }
 
   const go = (p: Page) => {
-    if (currentPath !== '/') {
-      window.history.pushState({}, '', '/')
-      setCurrentPath('/')
-    }
+    const targetUrl = p === 'overview' ? '/' : `/${p}`
+    window.history.pushState({}, '', targetUrl)
+    setCurrentPath(targetUrl)
     setPage(p)
     setMenu(false)
     setSidebarOpen(false)
