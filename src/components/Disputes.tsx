@@ -409,8 +409,8 @@ export function Disputes() {
                     onChange={e => setSimulateReason(e.target.value)}
                     className="w-full appearance-none rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 pr-10 text-sm text-slate-900 font-medium focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-100 focus:outline-none transition-all cursor-pointer"
                   >
-                    <option value="MERCHANDISE_OR_SERVICE_NOT_RECEIVED">Merchandise Not Received (INR)</option>
-                    <option value="MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED">Item Significantly Not As Described (SNAD)</option>
+                    <option value="MERCHANDISE_OR_SERVICE_NOT_RECEIVED">Merchandise / Item Not Received</option>
+                    <option value="MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED">Item Significantly Not As Described</option>
                     <option value="UNAUTHORISED">Unauthorised Transaction Claim</option>
                     <option value="CANCELLATION_OR_RETURN">Cancellation or Return Dispute</option>
                   </select>

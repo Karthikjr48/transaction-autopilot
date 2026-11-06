@@ -16,7 +16,7 @@ export interface Txn {
 // Strict Zero-Fake-Data: transactions are strictly populated from authoritative live API calls.
 export const TXNS: Txn[] = []
 
-const sym: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', INR: '₹' }
+const sym: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' }
 
 export const money = (n: number, c: string) =>
   `${sym[c] ?? ''}${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`

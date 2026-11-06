@@ -145,7 +145,7 @@ export function Settings() {
                 onChange={e => update('currency', e.target.value)}
                 className="h-11 w-full rounded-xl border border-field bg-canvas px-4 text-sm focus:border-link focus:outline-none"
               >
-                {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'].map(c => (
+                {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'].map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>

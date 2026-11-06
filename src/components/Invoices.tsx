@@ -155,7 +155,7 @@ export function Invoices() {
                 onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
                 className="h-11 w-full rounded-xl border border-field bg-canvas px-4 text-sm focus:border-link focus:outline-none"
               >
-                {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR'].map(c => (
+                {['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>

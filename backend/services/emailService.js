@@ -724,7 +724,7 @@ export async function sendOrderStatusEmail({ order, newStatus, carrier, tracking
  * 6. Send Payment Link Email
  * Dispatches an authentic PayPal Orders checkout link to a customer's email.
  */
-export async function sendPaymentLinkEmail({ order, recipientEmail, checkoutUrl, itemDescription, amountDisplay }) {
+export async function sendPaymentLinkEmail({ order, recipientEmail, checkoutUrl, itemDescription, amountDisplay, isReminder = false }) {
   if (!order || !order.id) {
     return { success: false, error: 'Order reference required for payment link email.' };
   }
@@ -738,26 +738,32 @@ export async function sendPaymentLinkEmail({ order, recipientEmail, checkoutUrl,
   const orderRef = maskOrderRef(order.id);
   const amountVal = amountDisplay || (order.amount ? `$${Number(order.amount).toFixed(2)} ${order.currency || 'USD'}` : '');
 
-  const { subject, html, text } = buildPaymentLinkTemplate({
+  let { subject, html, text } = buildPaymentLinkTemplate({
     orderRef,
     recipientName: order.payerName || 'Valued Customer',
-    itemDescription: itemDescription || 'PayPal Order Payment',
+    itemDescription: itemDescription || (isReminder ? 'Payment Reminder for PayPal Order' : 'PayPal Order Payment'),
     amountDisplay: amountVal,
     checkoutUrl: url,
     timestamp: new Date().toISOString()
   });
 
-  const idempotencyKey = generateIdempotencyKey(order.id, 'PAYMENT_LINK', recipient);
+  if (isReminder) {
+    subject = `Payment Reminder: Complete your PayPal Checkout (${orderRef})`;
+  }
+
+  const idempotencyKey = isReminder
+    ? generateIdempotencyKey(order.id, `PAYMENT_REMINDER_${Math.floor(Date.now() / 60000)}`, recipient)
+    : generateIdempotencyKey(order.id, 'PAYMENT_LINK', recipient);
 
   return await sendEmail({
-    eventType: 'PAYMENT_LINK',
+    eventType: isReminder ? 'PAYMENT_REMINDER' : 'PAYMENT_LINK',
     orderId: order.id,
     recipientEmail: recipient,
     subject,
     html,
     text,
     idempotencyKey,
-    metadata: { orderId: order.id, checkoutUrl: url }
+    metadata: { orderId: order.id, checkoutUrl: url, isReminder }
   });
 }
 

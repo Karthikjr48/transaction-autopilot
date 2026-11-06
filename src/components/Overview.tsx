@@ -91,7 +91,7 @@ export function Overview({
         {
           label: 'Pending Payments',
           value: String(analytics.pending_count ?? 0),
-          sub: 'Awaiting action',
+          sub: 'Pending customer action',
           dot: 'bg-warn-fg',
           icon: <Clock className="size-5 text-warn-fg" />,
         },
