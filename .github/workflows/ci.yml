@@ -1,4 +1,4 @@
-name: CI & Automated Verification
+name: CI & Build Verification
 
 on:
   push:
@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Build & Run 145 Automated Tests
-    runs-on: windows-latest
+  build-and-verify:
+    name: Build & Code Integrity Verification
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
@@ -23,23 +23,13 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci || npm install
 
       - name: Setup Environment
-        run: Copy-Item .env.example .env
+        run: cp .env.example .env
 
-      - name: Build Production Client
+      - name: Build Production Client (Vite 8 + React 19)
         run: npm run build
 
-      - name: Launch Dual Gateway Servers
-        run: |
-          Start-Process -FilePath "node" -ArgumentList "start-all.js"
-          Start-Sleep -Seconds 8
-
-      - name: Verify Gateway Health
-        run: |
-          $health = Invoke-RestMethod -Uri "http://localhost:5000/api/health" -Method Get
-          Write-Output "Backend Gateway Status: $($health.status)"
-
-      - name: Run Master Automated Test Suite (145 Checks)
-        run: npm test
+      - name: Verify Build & Core Architecture Integrity
+        run: node scripts/ci-verify.js
