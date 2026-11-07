@@ -1,0 +1,45 @@
+name: CI & Automated Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build & Run 145 Automated Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Setup Environment
+        run: Copy-Item .env.example .env
+
+      - name: Build Production Client
+        run: npm run build
+
+      - name: Launch Dual Gateway Servers
+        run: |
+          Start-Process -FilePath "node" -ArgumentList "start-all.js"
+          Start-Sleep -Seconds 8
+
+      - name: Verify Gateway Health
+        run: |
+          $health = Invoke-RestMethod -Uri "http://localhost:5000/api/health" -Method Get
+          Write-Output "Backend Gateway Status: $($health.status)"
+
+      - name: Run Master Automated Test Suite (145 Checks)
+        run: npm test

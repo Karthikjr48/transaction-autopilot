@@ -12,6 +12,7 @@
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![PayPal Sandbox](https://img.shields.io/badge/PayPal%20Sandbox-Connected-003087?style=for-the-badge&logo=paypal&logoColor=white)](https://developer.paypal.com)
 [![Tests](https://img.shields.io/badge/Tests-145%20Passing-brightgreen?style=for-the-badge)](#-automated-verification--test-suite)
+[![CI](https://github.com/Karthikjr48/transaction-autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Karthikjr48/transaction-autopilot/actions)
 
 [🚀 **Open Live Hosted Demo**](https://transaction-autopilot.onrender.com) &nbsp;|&nbsp; [🎥 **3-Min Video Demo**](#) &nbsp;|&nbsp; [📄 **Devpost Submission**](#)
 
