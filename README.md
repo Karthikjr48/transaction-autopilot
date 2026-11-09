@@ -13,6 +13,7 @@
 [![PayPal Sandbox](https://img.shields.io/badge/PayPal%20Sandbox-Connected-003087?style=for-the-badge&logo=paypal&logoColor=white)](https://developer.paypal.com)
 [![Tests](https://img.shields.io/badge/Tests-145%20Passing-brightgreen?style=for-the-badge)](#-automated-verification--test-suite)
 [![CI](https://github.com/Karthikjr48/transaction-autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Karthikjr48/transaction-autopilot/actions)
+[![Postman](https://img.shields.io/badge/Postman-Collection%20v2.1-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](./Transaction-Autopilot.postman_collection.json)
 
 [🚀 **Open Live Hosted Demo**](https://transaction-autopilot.onrender.com) &nbsp;|&nbsp; [🎥 **3-Min Video Demo**](https://youtu.be/nYhlemWRFEQ) &nbsp;|&nbsp; [📄 **Devpost Submission**](https://devpost.com/software/1220099-transaction-autopilot)
 
@@ -158,6 +159,22 @@ flowchart LR
 | **Backend** | Node.js 20+ · Express 4.21 · CORS · Dotenv |
 | **Email Delivery** | Brevo Transactional SMTP (Nodemailer relay with duplicate suppression) |
 | **Design System** | Official 2024–2026 PayPal Brand Identity: Bold black wordmark, high-contrast fintech aesthetic, WCAG AA/AAA compliance |
+
+---
+
+## 📮 Postman API Collection (1-Click Evaluation)
+
+Judges can evaluate and test all PayPal Orders v2 and Groq AI Copilot endpoints directly in Postman:
+
+1. Import [Transaction-Autopilot.postman_collection.json](./Transaction-Autopilot.postman_collection.json) into Postman.
+2. The collection is pre-configured with the production environment variable:
+   aseUrl: https://transaction-autopilot.onrender.com
+3. Pre-built request groups:
+   - **Health & Sandbox Telemetry:** Verify PayPal OAuth 2.0 app credentials and scopes.
+   - **Orders v2 Forensics:** Query real-time transaction streams and telemetry forensics.
+   - **Disputes Defense Center:** Ingest chargebacks and trigger 1-click evidence submission.
+   - **AI Copilot (Groq Llama-3):** Natural language merchant reasoning queries.
+   - **Cryptographic Audit:** Verify SHA-256 tamper-evident event hashes.
 
 ---
 

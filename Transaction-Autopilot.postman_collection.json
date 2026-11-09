@@ -1,0 +1,339 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-4a5b-9c8d-7e6f5a4b3c2d",
+    "name": "Transaction-Autopilot \u2014 PayPal Orders v2 & AI Copilot Suite",
+    "description": "Official Postman API Collection for Transaction-Autopilot (PayPal AI Hackathon 2026).\n\nEncompasses real-time PayPal Orders v2 telemetry, chargeback dispute defense synthesis, Groq LPU Meta Llama-3 merchant reasoning, and SHA-256 cryptographic audit trails.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://transaction-autopilot.onrender.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Sandbox Telemetry",
+      "item": [
+        {
+          "name": "System Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Verifies service health, PayPal environment mode (sandbox), and gateway connection."
+          }
+        },
+        {
+          "name": "PayPal Sandbox OAuth 2.0 Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "paypal",
+                "status"
+              ]
+            },
+            "description": "Inspects authoritative PayPal Sandbox connection, verified Application ID, and active OAuth 2.0 token scopes."
+          }
+        },
+        {
+          "name": "Executive Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant/dashboard/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant",
+                "dashboard",
+                "overview"
+              ]
+            },
+            "description": "Aggregated real-time merchant KPIs, volume velocity, recovery probability, and SMTP relay health."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. PayPal Orders v2 Forensics",
+      "item": [
+        {
+          "name": "List Orders Telemetry Stream",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant",
+                "orders"
+              ]
+            },
+            "description": "Streams PayPal Orders v2 records with verified amounts, masked references, and recovery scores."
+          }
+        },
+        {
+          "name": "List Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "paypal",
+                "transactions"
+              ]
+            },
+            "description": "Real-time stream of captured transactions and settlement states."
+          }
+        },
+        {
+          "name": "Order Forensics & Telemetry Drawer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant/orders/ORD-9912/forensics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant",
+                "orders",
+                "ORD-9912",
+                "forensics"
+              ]
+            },
+            "description": "Deep forensic investigation into client IP geolocation, browser fingerprint, token lifecycle, and recovery probability."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. PayPal Disputes Defense Center",
+      "item": [
+        {
+          "name": "List Disputes & Chargebacks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/disputes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "paypal",
+                "disputes"
+              ]
+            },
+            "description": "Ingests active buyer disputes, reason codes (e.g. Unauthorized Transaction, Item Not Received), and resolution deadlines."
+          }
+        },
+        {
+          "name": "Inspect Dispute Evidence & Tracking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/disputes/DISP-8041",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "paypal",
+                "disputes",
+                "DISP-8041"
+              ]
+            },
+            "description": "Retrieves the pre-compiled dispute defense package with verified FedEx proof-of-fulfillment tracking."
+          }
+        },
+        {
+          "name": "Submit 1-Click Evidence Defense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carrier\": \"FEDEX\",\n  \"trackingNumber\": \"FX-98210349\",\n  \"evidenceType\": \"PROOF_OF_FULFILLMENT\",\n  \"notes\": \"Signed proof of delivery uploaded directly via FedEx tracking API.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/disputes/DISP-8041/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "paypal",
+                "disputes",
+                "DISP-8041",
+                "resolve"
+              ]
+            },
+            "description": "Submits formal rebuttal evidence to PayPal Sandbox Disputes API."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. AI Copilot (Groq LPU Llama-3)",
+      "item": [
+        {
+          "name": "Analyze Dispute Exposure & Reason Codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Analyze our chargeback exposure and summarize dispute reason codes according to PayPal seller protection rules.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "analyze"
+              ]
+            },
+            "description": "Invokes Meta Llama-3 70B on Groq LPUs for deterministic, policy-cited merchant operations reasoning."
+          }
+        },
+        {
+          "name": "Payment Recovery Recommendation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What is the recommended recovery action for abandoned checkout order ORD-9912?\",\n  \"orderId\": \"ORD-9912\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/analyze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "analyze"
+              ]
+            },
+            "description": "Evaluates buyer intent telemetry to formulate automated payment recovery link dispatch."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Compliance & Cryptographic Audit",
+      "item": [
+        {
+          "name": "Inspect SHA-256 Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit/logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit",
+                "logs"
+              ]
+            },
+            "description": "Cryptographically verifies tamper-evident event hashes for regulatory compliance."
+          }
+        },
+        {
+          "name": "Customer Profile & Risk Forensics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/paypal/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "paypal",
+                "customers"
+              ]
+            },
+            "description": "Retrieves anonymized customer risk history and order count."
+          }
+        },
+        {
+          "name": "Invoices Center",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices"
+              ]
+            },
+            "description": "Lists generated PayPal Invoices with automated payment reconciliation."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+name: Render Server Keep-Alive
+
+on:
+  schedule:
+    # Runs every 10 minutes to prevent Render free-tier instance from sleeping
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-render:
+    name: Ping Render Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive HTTP Ping
+        run: |
+          echo "Pinging https://transaction-autopilot.onrender.com/api/health..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "https://transaction-autopilot.onrender.com/api/health")
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "Render server is active and healthy!"
+          else
+            echo "Warning: Received status $HTTP_STATUS"
+          fi
