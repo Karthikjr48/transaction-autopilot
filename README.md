@@ -14,7 +14,7 @@
 [![Tests](https://img.shields.io/badge/Tests-145%20Passing-brightgreen?style=for-the-badge)](#-automated-verification--test-suite)
 [![CI](https://github.com/Karthikjr48/transaction-autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Karthikjr48/transaction-autopilot/actions)
 
-[🚀 **Open Live Hosted Demo**](https://transaction-autopilot.onrender.com) &nbsp;|&nbsp; [🎥 **3-Min Video Demo**](#) &nbsp;|&nbsp; [📄 **Devpost Submission**](#)
+[🚀 **Open Live Hosted Demo**](https://transaction-autopilot.onrender.com) &nbsp;|&nbsp; [🎥 **3-Min Video Demo**](https://youtu.be/nYhlemWRFEQ) &nbsp;|&nbsp; [📄 **Devpost Submission**](https://devpost.com/software/1220099-transaction-autopilot)
 
 <sub>🏆 Built for the **Official PayPal AI Hackathon 2026** on Devpost</sub>
 
