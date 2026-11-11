@@ -15,7 +15,7 @@
 [![CI](https://github.com/Karthikjr48/transaction-autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Karthikjr48/transaction-autopilot/actions)
 [![Postman](https://img.shields.io/badge/Postman-Collection%20v2.1-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](./Transaction-Autopilot.postman_collection.json)
 
-[🚀 **Open Live Hosted Demo**](https://transaction-autopilot.onrender.com) &nbsp;|&nbsp; [🎥 **3-Min Video Demo**](https://youtu.be/nYhlemWRFEQ) &nbsp;|&nbsp; [📄 **Devpost Submission**](https://devpost.com/software/1220099-transaction-autopilot)
+[🚀 **Open Live Hosted Demo**](https://transaction-autopilot.onrender.com) &nbsp;|&nbsp; [🎥 **Demo Video Screencast**](https://youtu.be/9OifuYrkzus) &nbsp;|&nbsp; [📄 **Devpost Submission**](https://devpost.com/software/1220099-transaction-autopilot)
 
 <sub>🏆 Built for the **Official PayPal AI Hackathon 2026** on Devpost</sub>
 
