@@ -32,13 +32,19 @@ function resolveMerchantCredentials() {
 
   // If explicit custom environment credentials are provided, use them
   if (email && password) {
-    return { email, password };
+    return { email, password, isDemo: false };
   }
 
-  // Consistent PayPal Sandbox Demo credentials for Hackathon Evaluation & Local Dev
+  // Consistent PayPal Sandbox Demo credentials for Hackathon Evaluation (Devpost Judges)
+  const allowDemoLogin = process.env.ALLOW_DEMO_LOGIN !== 'false';
+  if (!allowDemoLogin) {
+    throw new Error('MERCHANT_PASSWORD is required in production when ALLOW_DEMO_LOGIN is disabled.');
+  }
+
   return {
     email: email || 'merchant@paypal-portal.local',
-    password: password || 'MerchantSecure2026!'
+    password: password || 'MerchantSecure2026!',
+    isDemo: true
   };
 }
 

@@ -56,7 +56,7 @@ Merchants lack a 24/7 dedicated payment engineering team to audit raw gateway to
 
 1. **Detects & Diagnoses:** Continuously inspects PayPal Orders v2 state vectors — buyer approval tokens, authorization expiration, uncaptured funds, and dispute risk.
 2. **Defends Disputes Autonomously:** Listens to `CUSTOMER.DISPUTE.CREATED` webhooks, inspects order shipment telemetry, drafts formal Seller Protection rebuttal packages, and submits carrier tracking (FedEx, UPS, DHL) in 1 click.
-3. **Recovers Lost Checkouts:** Dispatches customized, 1-click payment recovery checkout links to buyers via Brevo transactional SMTP with idempotent duplicate suppression.
+3. **Recovers Lost Checkouts:** Dispatches customized, 1-click payment recovery checkout links to buyers via Resend transactional HTTPS API with idempotent duplicate suppression.
 4. **Conversational Copilot:** Merchants interact with a fast Groq LPU-powered AI assistant that answers live store metric queries, audits specific transaction tokens, and executes payment dispatch right from chat.
 
 ---
@@ -104,7 +104,7 @@ A conversational copilot, powered by Groq LPU inference for sub-second responses
 - **Cryptographic Webhook Signature Verification:** Validates `PAYPAL-TRANSMISSION-SIG` headers against official PayPal certificates with replay rejection.
 
 ### 📧 5. Reliable Customer Payment Reminders
-- Transactional notification delivery powered by **Brevo SMTP relay**.
+- Transactional notification delivery powered by **Resend Transactional API**.
 - **Strict Idempotent Duplicate Suppression:** Ensures buyers never receive repetitive reminder emails.
 - **Atomic JSON Data Persistence:** Guarantees zero data loss with automated `.bak` snapshot backups before every disk write.
 
@@ -129,7 +129,7 @@ flowchart LR
     subgraph External["☁️ Authoritative Cloud Gateways"]
         PP["PayPal Sandbox<br/>Orders v2 · Disputes v1 · OAuth 2.0"]
         GROQ["Groq AI LPU<br/>Qwen 2.5 Inference"]
-        BREVO["Brevo SMTP Relay<br/>Transactional Notifications"]
+        RESEND["Resend HTTPS API<br/>Transactional Notifications"]
     end
 
     UI <-->|"REST / JSON"| AUTH
@@ -157,7 +157,7 @@ flowchart LR
 | **Frontend** | React 19 · TypeScript 5.7 · Vite 8 · Tailwind CSS v4 · Lucide React Icons |
 | **Routing** | HTML5 PushState SPA Routing: `/`, `/orders`, `/transactions`, `/ai`, `/disputes`, `/invoices`, `/links`, `/audit`, `/settings`, `/sitemap.xml` |
 | **Backend** | Node.js 20+ · Express 4.21 · CORS · Dotenv |
-| **Email Delivery** | Brevo Transactional SMTP (Nodemailer relay with duplicate suppression) |
+| **Email Delivery** | Resend Transactional HTTPS API (Port 443 with duplicate suppression) |
 | **Design System** | Official 2024–2026 PayPal Brand Identity: Bold black wordmark, high-contrast fintech aesthetic, WCAG AA/AAA compliance |
 
 ---
@@ -177,6 +177,13 @@ Judges can evaluate and test all PayPal Orders v2 and Groq AI Copilot endpoints 
    - **Cryptographic Audit:** Verify SHA-256 tamper-evident event hashes.
 
 ---
+
+
+### 🔑 Hackathon Judges Evaluation Credentials (Sandbox Demo)
+For immediate evaluation without manual merchant onboarding:
+- **Demo Merchant Email:** `merchant@paypal-portal.local`
+- **Demo Password:** `MerchantSecure2026!`
+*(Pre-filled on the login screen; gated by `ALLOW_DEMO_LOGIN=true` for safe sandbox evaluation).*
 
 ## 🚀 Quick Start Guide for Hackathon Judges
 
@@ -274,7 +281,7 @@ npm test
 |:---|:---|
 | **PayPal** | **Core Transaction Engine:** PayPal Orders v2 for order creation, capture telemetry, and token lifecycle; Customer Disputes API v1 for dispute ingestion, evidence submission, and claim settlement; OAuth 2.0 Client Credentials Grant; Signed Webhooks. |
 | **Groq** | **AI LPU Inference:** Sub-second transactional intent analysis, root-cause state hypothesis generation, and merchant dispute defense drafting. |
-| **Brevo** | **Transactional Communications:** Enterprise SMTP relay for idempotent customer checkout links and payment recovery notifications. |
+| **Resend** | **Transactional Communications:** Developer-first HTTPS email delivery for idempotent customer checkout links and payment recovery notifications. |
 | **Render** | **Production Cloud Infrastructure:** Host of the live production deployment at `https://transaction-autopilot.onrender.com`. |
 
 ### Submission Information:
